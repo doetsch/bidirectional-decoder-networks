@@ -1,0 +1,21 @@
+
+reinit 0
+batching sorted
+max_seqs 15
+batch_size 5000
+save_interval 5
+adadelta 1
+learning_rate 1
+gradient_l2_norm 1
+
+num_epochs 30
+task train
+train train.hdf5
+dev valid.hdf5
+device gpu
+model out 
+
+start_epoch 1
+cache_size 256G
+log ./demo.rimes.log
+initialize_from_json demo.json

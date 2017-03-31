@@ -1,0 +1,32 @@
+{
+"conv1":   { "class" : "conv_1d", "n_features" : 16, "filter" : [3, 3], "pool_size" : [2, 2], "border_mode" : "same" },
+"conv2":   { "class" : "conv_1d", "n_features" : 32, "filter" : [3, 3], "pool_size" : [2, 2], "border_mode" : "same", "from" : "conv1" },
+"conv3":   { "class" : "conv_1d", "n_features" : 64, "filter" : [3, 3], "pool_size" : [2, 2], "border_mode" : "same", "from" : "conv2" },
+
+"lstm_in_fw_1" : { "class" : "rec", "n_out" : 512, "dropout" : 0.3, "direction" : 1, "from" : "conv3" },
+"lstm_in_bw_1" : { "class" : "rec", "n_out" : 512, "dropout" : 0.3, "direction" : -1, "from" : "conv3" },
+
+"base" : { "class" : "downsample", "axis" : 0, "method" : "average", "factor" : 2, "from" : [ "lstm_in_fw_1", "lstm_in_bw_1" ] },
+
+"length" : { "class" : "length_projection", "from" : [ "lstm_in_fw_1", "lstm_in_bw_1" ], "target" : "classes", "oracle" : true, "eval_oracle" : false },
+
+"decoder_fw" : { "class" : "rec", "n_out" : 512, "dropout" : 0.3, "direction" : 1, "from" : "length", "base" : "base",
+"encoder" : "lstm_in_bw_1",
+"recurrent_transform" : "attention_list",
+"attention_template" : 128,
+"attention_glimpse" : 1,
+"attention_store" : 1,
+"attention_momentum" : "conv2d",
+"attention_filters" : 64,
+"attention_sharpening" : 2.0 },
+"decoder_bw" : { "class" : "rec", "n_out" : 512, "dropout" : 0.3, "direction" : -1, "from" : "length", "base" : "base",
+"encoder" : "lstm_in_fw_1",
+"recurrent_transform" : "attention_list",
+"attention_template" : 128,
+"attention_glimpse" : 1,
+"attention_store" : 1,
+"attention_momentum" : "conv2d",
+"attention_filters" : 64,
+"attention_sharpening" : 2.0 },
+"output" : { "class" : "softmax", "loss" : "ce", "dropout" : 0.3, "from" : [ "decoder_fw", "decoder_bw" ], "time_limit" : "inf" }
+}
